@@ -14,7 +14,7 @@ class GestorIncidencias {
 
   List<Incidencia> buscar(String texto) {
     if (texto.trim().isEmpty) return incidencias;
-    return incidencias.where((x) => x.titulo.contains(texto)).toList();
+    return incidencias.where((x) => x.titulo.toLowerCase().contains(texto.toLowerCase().trim()) | x.descripcion.toLowerCase().contains(texto.toLowerCase().trim())).toList();
   }
 
   Incidencia? porId(String id) {
@@ -33,9 +33,11 @@ class GestorIncidencias {
     for (var i = 0; i < incidencias.length; i++) {
       if (incidencias[i].id == id) {
         incidencias[i].estado = estado;
+
         break;
       }
     }
+    await datos.guardar(incidencias);
   }
 
   Future<void> crear(String titulo, String descripcion, String cliente,
