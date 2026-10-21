@@ -32,8 +32,14 @@ class GestorIncidencias {
   Future<void> cambiarEstado(String id, String estado) async {
     for (var i = 0; i < incidencias.length; i++) {
       if (incidencias[i].id == id) {
+        if(incidencias[i].estado.trim() == 'Pendiente'){
+          cantidadPendientes--;
+        } else if (estado.trim() == 'Pendiente') {
+          cantidadPendientes++;
+        }
+        
         incidencias[i].estado = estado;
-
+        
         break;
       }
     }
