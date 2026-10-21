@@ -2,6 +2,9 @@ import '../data/almacen_local.dart';
 import '../model/incidencia.dart';
 
 class GestorIncidencias {
+  static const String todosEstados = 'Todos';
+  static const String todasPrioridades = 'Todas';
+  
   final AlmacenLocal datos = AlmacenLocal();
   List<Incidencia> incidencias = [];
   int cantidadPendientes = 0;
@@ -12,9 +15,21 @@ class GestorIncidencias {
         incidencias.where((x) => x.estado == 'Pendiente').length;
   }
 
-  List<Incidencia> buscar(String texto) {
-    if (texto.trim().isEmpty) return incidencias;
-    return incidencias.where((x) => x.titulo.toLowerCase().contains(texto.toLowerCase().trim()) | x.descripcion.toLowerCase().contains(texto.toLowerCase().trim())).toList();
+  List<Incidencia> buscar(
+    String texto, {
+    String estado = todosEstados,
+    String prioridad = todasPrioridades,
+  }) {
+    final consulta = texto.trim().toLowerCase();
+    return incidencias.where((x) {
+      final coincideTexto = consulta.isEmpty ||
+          x.titulo.toLowerCase().contains(consulta) ||
+          x.descripcion.toLowerCase().contains(consulta);
+      final coincideEstado = estado == todosEstados || x.estado == estado;
+      final coincidePrioridad =
+          prioridad == todasPrioridades || x.prioridad == prioridad;
+      return coincideTexto && coincideEstado && coincidePrioridad;
+    }).toList();
   }
 
   Incidencia? porId(String id) {
@@ -46,8 +61,24 @@ class GestorIncidencias {
     await datos.guardar(incidencias);
   }
 
+  Future<void> cambiarPrioridad(String id, String prioridad) async{
+    if (!Incidencia.prioridades.contains(prioridad)){
+      throw ArgumentError('Prioridad no válida: $prioridad');
+    }
+    for (var i = 0; i < incidencias.length; i++){
+      if (incidencias[i].id == id){
+        incidencias[i].prioridad = prioridad;
+        break;
+      }
+    }
+    await datos.guardar(incidencias);
+  }
+
   Future<void> crear(String titulo, String descripcion, String cliente,
-      String categoria) async {
+      String categoria, String prioridad) async {
+    if (!Incidencia.prioridades.contains(prioridad)) {
+      throw ArgumentError('Prioridad no válida: $prioridad');
+    }
     final nuevo = Incidencia(
       id: 'INC-${DateTime.now().microsecondsSinceEpoch}',
       titulo: titulo,
@@ -55,6 +86,7 @@ class GestorIncidencias {
       cliente: cliente,
       categoria: categoria,
       estado: 'Pendiente',
+      prioridad: prioridad,
       fecha: DateTime.now().toIso8601String().split('T').first,
     );
     incidencias.insert(0, nuevo);
